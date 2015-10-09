@@ -21,7 +21,7 @@ class Chef
         allowed_disabled = node['selinux_policy']['allow_disabled']
         # return false only when SELinux is disabled and it's allowed
         return_val = !(selinux_disabled && allowed_disabled)
-        Chef::Log.warn('SELinux is disabled / unreachable, skipping') if !return_val
+        Chef::Log.warn('SELinux is disabled / unreachable, skipping') unless return_val
         return return_val
       end
     end
