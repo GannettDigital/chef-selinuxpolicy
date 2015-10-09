@@ -3,6 +3,10 @@ selinuxpolicy CHANGELOG
 
 This file is used to list changes made in each version of the selinuxpolicy cookbook.
 
+0.7.3
+-----
+- Kris Vincent - Updating to our standards for import (Rakefile, Testing, etc)
+
 0.7.2
 -----
 - [shortdudey123] - ChefSpec matchers, helps testing

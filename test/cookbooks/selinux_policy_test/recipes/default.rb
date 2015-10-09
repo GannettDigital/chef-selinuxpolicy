@@ -6,7 +6,7 @@
 #
 # GPLv2
 
-include_recipe 'selinux::enforcing'
+include_recipe 'selinux::permissive'
 include_recipe 'selinux_policy::install'
 
 selinux_policy_port '1080' do
