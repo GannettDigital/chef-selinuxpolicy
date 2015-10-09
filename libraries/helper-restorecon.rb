@@ -7,7 +7,7 @@ class Chef
     module Helpers
       # Returns the system command for restorecon
       def restorecon(file_spec)
-        path = file_spec.to_s.sub(/\\/,'') # Remove backslashes
+        path = file_spec.to_s.sub(/\\/, '') # Remove backslashes
         return "restorecon #{path}" if ::File.exist?(path) # Return if it's not a regular expression
         path.count('/').times do
           path = ::File.dirname(path) # Splits at last '/' and returns front part

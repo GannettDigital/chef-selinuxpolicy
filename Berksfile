@@ -7,4 +7,3 @@ group :integration do
   cookbook 'gd-test-helper'
   cookbook 'selinux_policy_test', :path => './test/cookbooks/selinux_policy_test'
 end
-
