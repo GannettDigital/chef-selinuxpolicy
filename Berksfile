@@ -1,8 +1,9 @@
-source 'https://supermarket.chef.io'
+source 'https://gdp-chef-supermarket.gannettdigital.com'
 
 metadata
 
 group :integration do
-  cookbook 'selinux', '~> 0.9.0'
-  cookbook 'selinux_policy_test', path: './test/cookbooks/selinux_policy_test'
+  cookbook 'selinux'
+  cookbook 'gd-test-helper'
+  cookbook 'selinux_policy_test', :path => './test/cookbooks/selinux_policy_test'
 end

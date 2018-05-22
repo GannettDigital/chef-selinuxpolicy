@@ -1,6 +1,6 @@
 # a resource for managing selinux permissive contexts
 
-property :name, String, name_property: true
-property :allow_disabled, [true, false], default: true
+actions :add, :delete
+default_action :add
 
-attribute :name, kind_of: String, name_attribute: true
+attribute :name, :kind_of => String, :name_attribute => true
