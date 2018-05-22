@@ -1,35 +1,16 @@
+---
 driver:
   name: vagrant
 
 provisioner:
   name: chef_zero
-  deprecations_as_errors: true
 
 platforms:
-# - name: amazon-linux
-#   driver_config:
-#     box: mvbcoding/awslinux
-- name: centos-6
-- name: centos-7
-# - name: debian-8
-# - name: debian-9
-# - name: fedora-27
-# - name: freebsd-10
-# - name: freebsd-11
-# - name: opensuse-leap-42.2
-# - name: ubuntu-14.04
-# - name: ubuntu-16.04
+  - name: centos-6.6
 
 suites:
   - name: default
     run_list:
-      - recipe[selinux_policy_test::setup]
-      - recipe[selinux_policy_test::single_port]
-      - recipe[selinux_policy_test::twice_port]
-      - recipe[selinux_policy_test::range_port]
-      - recipe[selinux_policy_test::bad_port]
-      - recipe[selinux_policy_test::module]
-      - recipe[selinux_policy_test::module_directory]
-      - recipe[selinux_policy_test::fcontext]
-      - recipe[selinux_policy_test::fcontext_filetype]
-      - recipe[selinux_policy_test::single_port_add_to_range]
+      - recipe[gd-test-helper]
+      - recipe[selinux::default]
+      - recipe[selinux_policy_test::default]
