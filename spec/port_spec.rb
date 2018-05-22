@@ -4,53 +4,28 @@ describe 'selinux_policy port' do
   describe 'single port' do
     describe 'AddOrModify' do
       let(:chef_run) do
-        runner = ChefSpec::SoloRunner.new(platform: 'centos', version: '7.4.1708', step_into: ['selinux_policy_port'])
-        runner.converge('selinux_policy_test::single_port')
+        runner = ChefSpec::SoloRunner.new(platform: 'centos', version: '7.0', step_into: ['selinux_policy_port'])
+        Chef::Config[:cookbook_path] << './test/cookbooks'
+        runner.converge('selinux_policy_test::single_port') do
+          runner.node.override['selinux_policy']['allow_disabled'] = false
+        end
       end
       it 'defines a single port' do
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(false)
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(false)
+        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ {print $(NF-1)}' | grep -q ^").and_return(false)
         expect(chef_run).to     run_execute('selinux-port-1080-add')
         expect(chef_run).not_to run_execute('selinux-port-1080-modify')
       end
-      it 'redefines the port, same secontext' do
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(true)
-        expect(chef_run).not_to    run_execute('selinux-port-1080-add')
-        expect(chef_run).not_to    run_execute('selinux-port-1080-modify')
-      end
-      it 'avoids redefining the port, different secontext' do
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(false)
+      it 'redefines the port' do
+        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ {print $(NF-1)}' | grep -q ^").and_return(true)
+        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(false)
         expect(chef_run).not_to run_execute('selinux-port-1080-add')
         expect(chef_run).to     run_execute('selinux-port-1080-modify')
       end
-    end
-    describe 'default_AddOrModify' do
-      let(:chef_run) do
-        runner = ChefSpec::SoloRunner.new(platform: 'centos', version: '7.4.1708', step_into: ['selinux_policy_port'])
-        runner.converge('selinux_policy_test::single_default_port')
-      end
-      it 'defines a single port' do
-        stub_command('[ "$(getenforce)" = "Enforcing" ]').and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(false)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(false)
-        expect(chef_run).to     run_execute('selinux-port-10080-add')
-        expect(chef_run).not_to run_execute('selinux-port-10080-modify')
-      end
-      it 'avoids redefines the port, same secontext' do
-        stub_command('[ "$(getenforce)" = "Enforcing" ]').and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(true)
-        expect(chef_run).not_to    run_execute('selinux-port-10080-add')
-        expect(chef_run).not_to    run_execute('selinux-port-10080-modify')
-      end
-      it 'redefining the port, different secontext' do
-        stub_command('[ "$(getenforce)" = "Enforcing" ]').and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -q ^").and_return(true)
-        stub_command("seinfo --protocol=tcp --portcon=10080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ && $(NF-3) !~ /[0-9]*-[0-9]*/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(false)
-        expect(chef_run).not_to run_execute('selinux-port-10080-add')
-        expect(chef_run).to     run_execute('selinux-port-10080-modify')
+      it 'avoids redefining the port' do
+        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ {print $(NF-1)}' | grep -q ^").and_return(true)
+        stub_command("seinfo --protocol=tcp --portcon=1080 | awk -F: '$(NF-1) !~ /reserved_port_t$/ {print $(NF-1)}' | grep -P 'http_port_t'").and_return(true)
+        expect(chef_run).not_to run_execute('selinux-port-1080-add')
+        expect(chef_run).not_to run_execute('selinux-port-1080-modify')
       end
     end
     # TODO: 'Add':
@@ -68,9 +43,11 @@ describe 'selinux_policy port' do
 
   describe 'range of ports' do
     let(:chef_run) do
-      runner = ChefSpec::SoloRunner.new(platform: 'centos', version: '7.4.1708', step_into: ['selinux_policy_port'])
+      runner = ChefSpec::SoloRunner.new(platform: 'centos', version: '7.0', step_into: ['selinux_policy_port'])
       Chef::Config[:cookbook_path] << './test/cookbooks'
-      runner.converge('selinux_policy_test::range_port')
+      runner.converge('selinux_policy_test::range_port') do
+        runner.node.override['selinux_policy']['allow_disabled'] = false
+      end
     end
     # TODO: complete
     # it 'defines a port' do

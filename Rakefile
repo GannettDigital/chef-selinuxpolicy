@@ -1,51 +1,68 @@
-gem 'rubocop', '0.33.0'
+#!/usr/bin/env rake
 
-require 'rspec/core/rake_task'
-require 'rubocop/rake_task'
-require 'foodcritic'
-require 'kitchen'
-
-# Style tests. Rubocop and Foodcritic
+# Style tests. cookstyle (rubocop) and Foodcritic
 namespace :style do
-  desc 'Run Ruby style checks'
-  RuboCop::RakeTask.new(:ruby)
+  begin
+    require 'cookstyle'
+    require 'rubocop/rake_task'
 
-  desc 'Run Chef style checks'
-  FoodCritic::Rake::LintTask.new(:chef) do |t|
-    t.options = {
-      fail_tags: ['any'],
-      tags: ['~FC005']
-    }
+    desc 'Run Ruby style checks'
+    RuboCop::RakeTask.new(:ruby)
+  rescue LoadError => e
+    puts ">>> Gem load error: #{e}, omitting #{task.name}" unless ENV['CI']
+  end
+
+  begin
+    require 'foodcritic'
+
+    desc 'Run Chef style checks'
+    FoodCritic::Rake::LintTask.new(:chef) do |t|
+      t.options = {
+        fail_tags: ['any'],
+        progress: true,
+        exclude: 'spec',
+      }
+    end
+  rescue LoadError => e
+    puts ">>> Gem load error: #{e}, omitting #{task.name}" unless ENV['CI']
   end
 end
 
 desc 'Run all style checks'
 task style: ['style:chef', 'style:ruby']
 
-# Rspec and ChefSpec
-desc 'Run ChefSpec examples'
-RSpec::Core::RakeTask.new(:spec)
+# ChefSpec
+begin
+  require 'rspec/core/rake_task'
+
+  desc 'Run ChefSpec examples'
+  RSpec::Core::RakeTask.new(:spec)
+rescue LoadError => e
+  puts ">>> Gem load error: #{e}, omitting #{task.name}" unless ENV['CI']
+end
 
 # Integration tests. Kitchen.ci
 namespace :integration do
-  desc 'Run Test Kitchen with Vagrant'
-  task :vagrant do
-    Kitchen.logger = Kitchen.default_file_logger
-    Kitchen::Config.new.instances.each do |instance|
-      instance.test(:always)
-    end
+  begin
+    require 'kitchen/rake_tasks'
+
+    desc 'Run kitchen integration tests'
+    Kitchen::RakeTasks.new
+  rescue LoadError, StandardError => e
+    puts ">>> Gem load error: #{e}, omitting #{task.name}" unless ENV['CI']
   end
-  task :ec2 do
-    Kitchen.logger = Kitchen.default_file_logger
-    @loader = Kitchen::Loader::YAML.new(project_config: './.kitchen.ec2.yml')
-    config = Kitchen::Config.new(loader: @loader)
-    config.instances.each do |instance|
-      instance.test(:always)
-    end
+end
+
+namespace :supermarket do
+  begin
+    require 'stove/rake_task'
+
+    desc 'Publish cookbook to Supermarket with Stove'
+    Stove::RakeTask.new
+  rescue LoadError => e
+    puts ">>> Gem load error: #{e}, omitting #{task.name}" unless ENV['CI']
   end
 end
 
 # Default
-task default: ['style', 'spec', 'integration:vagrant']
-task ec2: ['style', 'spec', 'integration:ec2']
-task test: ['style', 'spec']
+task default: %w(style spec)
