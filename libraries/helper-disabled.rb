@@ -22,7 +22,7 @@ class Chef
         # return false only when SELinux is disabled and it's allowed
         return_val = !(selinux_disabled && allowed_disabled)
         Chef::Log.warn('SELinux is disabled / unreachable, skipping') unless return_val
-        return return_val
+        return_val
       end
     end
   end
